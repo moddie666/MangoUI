@@ -261,7 +261,7 @@ sub toggle_option {
              }
              if ($opt->[3] =~ /^a/){
                 $opt->[3] =~ s/^a/i/g;
-                print "toggled off/$ [$idx]:[$opt->[1]]${bla}[$opt->[3]]\n";
+                print "toggled off [$idx]:[$opt->[1]]${bla}[$opt->[3]]\n";
              }elsif ($opt->[3] =~ /^i/){
                 $opt->[3] =~ s/^i/a/g;
                 print "toggled on [$idx]:[$opt->[1]]${bla}[$opt->[3]]\n";
