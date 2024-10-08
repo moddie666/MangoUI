@@ -16,7 +16,7 @@ An example config file is provided.
 ------------------------------------
 #### What it does:
 - it reads the config file line by line and presents each relevant line in the GUI. (see: "Known Line Types" below)
-- lines identified as either option or option=value are presented as lines with checkboxes and also textboxes where apropriate.
+- lines identified as either "option" or "option+value" are presented as "lines with checkboxes" and "lines with check+textboxes" respectively.
 - the checkbox adds/removes "#", from the start of the line, to enable/disable an option.
 - the textbox sets an options value.
 - comments are shown as text lines between GUI elements.
