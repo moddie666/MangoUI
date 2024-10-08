@@ -106,24 +106,27 @@ sub load_config {
         chomp $line;
         if ($line =~ /^\s*$/) {
             push @options, [$idx, "", "", id_line($line), $line];
-        } elsif ($line =~ /^\s*#+\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.\/:;,'"\\\}\{\]\[-]+)?\s*$/) {
+        } elsif ($line =~ /^\s*#+\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.\/:;,'"\\\}\{\]\[\s-]+)?\s*$/) {
             my ($key, $value) = ($1, $2);
-            print "iov:$line\n";
+            print id_line($line).":$line\n";
             push @options, [$idx, $key, $value, id_line($line), $line];
         } elsif ($line =~ /^\s*#+\s*([0-9a-zA-Z_-]+)\s*$/) {
             my ($key, $value) = ($1, $2);
-            print "ioo:$line\n";
+            print id_line($line).":$line\n";
             push @options, [$idx, $key, $value, id_line($line), $line];
-        } elsif ($line =~ /^\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.\/:;,-]+)?\s*$/) {
+        } elsif ($line =~ /^\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.\/:;,\s-]+)?\s*$/) {
             my ($key, $value) = ($1, $2);
-            print "aov:$line\n";
+            print id_line($line).":$line\n";
             push @options, [$idx, $key, $value, id_line($line), $line];
         } elsif ($line =~ /^\s*([0-9a-zA-Z_-]+)\s*$/) {
             my ($key, $value) = ($1, $2);
-            print "aoo:$line\n";
+            print id_line($line).":$line\n";
             push @options, [$idx, $key, "", id_line($line), $line];
         } elsif ($line =~ /^\s*#+/) {
-            print "com:$line\n";
+            print id_line($line).":$line\n";
+            push @options, [$idx, "#", "", id_line($line), $line];
+        } else {
+            print id_line($line).":$line\n";
             push @options, [$idx, "#", "", id_line($line), $line];
         }
         $idx += 1;
@@ -228,11 +231,11 @@ sub id_line { #identify type of line
            $output = "emt";
         } elsif ($input =~ /^\s*#+\s*([0-9a-zA-Z_-]+)\s*$/) { # inactive option only line
            $output = "ioo";
-        } elsif ($input =~ /^\s*#+\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.,\/:;'"\\\}\{\]\[-]+)?\s*$/) { # inactive otion/value line
+        } elsif ($input =~ /^\s*#+\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.,\/:;'"\\\}\{\]\[\s-]+)?\s*$/) { # inactive otion/value line
             $output = "iov";
         } elsif ($input =~ /^\s*([0-9a-zA-Z_-]+)\s*$/) { # active option line
             $output = "aoo"; 
-        } elsif ($input =~ /^\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.,\/:;'"\\\}\{\]\[-]+)?\s*$/) { # active option/value line
+        } elsif ($input =~ /^\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.,\/:;'"\\\}\{\]\[\s-]+)?\s*$/) { # active option/value line
             $output = "aov";
         } elsif ($input =~ /^\s*#+.*$/) { # Comment-only line
             $output = "com";
