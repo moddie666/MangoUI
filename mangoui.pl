@@ -249,16 +249,20 @@ sub toggle_option {
     my ($idx, $is_on_ref) = @_;
     foreach my $opt (@options) {
         if ($opt->[0] eq $idx) {
+            my $bla = "NA";
+            if (defined($opt->[2])){
+               $bla = "[$opt->[2]]";
+            } else {
+               $bla = "NA";
+               return;
+               #my $temp = "NA";
+            }
             if ($opt->[3] =~ /^a/){
                $opt->[3] =~ s/^a/i/g;
-               print "toggled [$idx]:[$opt->[1]]${temp}[$opt->[3]]\n";
+               print "toggled off/$ [$idx]:[$opt->[1]]${bla}[$opt->[3]]\n";
             }elsif ($opt->[3] =~ /^i/){
                $opt->[3] =~ s/^i/a/g;
-            }
-            my $temp = "";
-            if (defined($opt->[2])){
-               $temp = "[$opt->[2]]";
-               print "toggled [$idx]:[$opt->[1]]${temp}[$opt->[3]]\n";
+               print "toggled on [$idx]:[$opt->[1]]${bla}[$opt->[3]]\n";
             }
         }
     }
