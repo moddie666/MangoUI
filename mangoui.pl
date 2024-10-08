@@ -3,7 +3,10 @@
 # 2024 mod@benjicom
 #
 # MangoUI - The basicest MangoHUD config editor
-# v0.1
+# v0.2
+# special tahnks to https://github.com/Skarbrand
+# for the 3 column version \o/
+#
 use strict;
 use warnings;
 use Gtk3 '-init';
@@ -24,7 +27,7 @@ write_file($icon_path, $decoded_image);
 my $mw = Gtk3::Window->new('toplevel');
 $mw->set_title("$prog_name - MangoHud Config Editor");
 $mw->set_border_width(10);
-$mw->set_default_size(1280, 720);
+$mw->set_default_size(1360, 768);
 # Load the logo image and set it as the window icon
 $mw->set_icon_from_file($icon_path);
 $mw->signal_connect(delete_event => sub { Gtk3->main_quit; });
@@ -41,8 +44,9 @@ $scrolled_window->set_policy('automatic', 'automatic');
 $vbox->pack_start($scrolled_window, 1, 1, 0);
 
 # Create a frame inside the scrolled window
-my $scrollable_frame = Gtk3::Box->new('vertical', 5);
+my $scrollable_frame = Gtk3::FlowBox->new;
 $scrolled_window->add($scrollable_frame);
+$scrollable_frame->set_min_children_per_line(3);
 
 # Button for loading the configuration
 my $load_button = Gtk3::Button->new("Load Config");
@@ -155,7 +159,7 @@ sub display_options {
             $hbox->pack_start($cb, 0, 0, 0);
             my $label = Gtk3::Label->new("$key");
             $hbox->pack_start($label, 0, 0, 0);
-            $scrollable_frame->pack_start($hbox, 0, 0, 0);
+            $scrollable_frame->add($hbox);
         } elsif ($id eq "iov") {
         # inactive otion/value line
             my $hbox = Gtk3::Box->new('horizontal', 5);
@@ -165,7 +169,7 @@ sub display_options {
             $hbox->pack_start($cb, 0, 0, 0);
             my $label = Gtk3::Label->new("$key = ");
             $hbox->pack_start($label, 0, 0, 0);
-            my $entry = Gtk3::Entry->new();
+            my $entry = Gtk3::Entry->new();# p
             if (defined($value)){
                $entry->set_text("$value");
             }else{
@@ -173,7 +177,7 @@ sub display_options {
             }
             $entry->signal_connect('focus-out-event' => sub { update_value($idx, $entry->get_text); });
             $hbox->pack_start($entry, 1, 1, 0);
-            $scrollable_frame->pack_start($hbox, 0, 0, 0);
+            $scrollable_frame->add($hbox);
         } elsif ($id eq "aoo") {
         # active option line
             my $hbox = Gtk3::Box->new('horizontal', 5);
@@ -183,7 +187,7 @@ sub display_options {
             $hbox->pack_start($cb, 0, 0, 0);
             my $label = Gtk3::Label->new("$key");
             $hbox->pack_start($label, 0, 0, 0);
-            $scrollable_frame->pack_start($hbox, 0, 0, 0);
+            $scrollable_frame->add($hbox);
         } elsif ( $id eq "aov") {
         # active option/value line
             my $hbox = Gtk3::Box->new('horizontal', 5);
@@ -201,7 +205,7 @@ sub display_options {
             }
             $entry->signal_connect('focus-out-event' => sub { update_value($idx, $entry->get_text); });
             $hbox->pack_start($entry, 1, 1, 0);
-            $scrollable_frame->pack_start($hbox, 0, 0, 0);
+            $scrollable_frame->add($hbox);
         } elsif ($id eq "com") {
         # Comment-only line
             my $escapelabel = encode_entities($original_line);
@@ -215,7 +219,7 @@ sub display_options {
             #$label->set_justify('left');          # Set text justification
             $label->set_halign('start');          # Align label horizontally to start (left)
             $label->set_valign('start');          # Align label vertically to top (optional)
-            $scrollable_frame->pack_start($label, 0, 0, 0);
+            $scrollable_frame->add($label);
         } else { # un-matched line
                  # should not land here catchall
         }
@@ -234,7 +238,7 @@ sub id_line { #identify type of line
         } elsif ($input =~ /^\s*#+\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.,\/:;'"\\\}\{\]\[\s-]+)?\s*$/) { # inactive otion/value line
             $output = "iov";
         } elsif ($input =~ /^\s*([0-9a-zA-Z_-]+)\s*$/) { # active option line
-            $output = "aoo"; 
+            $output = "aoo";
         } elsif ($input =~ /^\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.,\/:;'"\\\}\{\]\[\s-]+)?\s*$/) { # active option/value line
             $output = "aov";
         } elsif ($input =~ /^\s*#+.*$/) { # Comment-only line
@@ -249,21 +253,21 @@ sub toggle_option {
     my ($idx, $is_on_ref) = @_;
     foreach my $opt (@options) {
         if ($opt->[0] eq $idx) {
-            my $bla = "NA";
-            if (defined($opt->[2])){
-               $bla = "[$opt->[2]]";
-            } else {
-               $bla = "NA";
-               return;
-               #my $temp = "NA";
-            }
-            if ($opt->[3] =~ /^a/){
-               $opt->[3] =~ s/^a/i/g;
-               print "toggled off/$ [$idx]:[$opt->[1]]${bla}[$opt->[3]]\n";
-            }elsif ($opt->[3] =~ /^i/){
-               $opt->[3] =~ s/^i/a/g;
-               print "toggled on [$idx]:[$opt->[1]]${bla}[$opt->[3]]\n";
-            }
+             my $bla = "NA";
+             if (defined($opt->[2])){
+                $bla = "[$opt->[2]]";
+             } else {
+                $bla = "NA";
+                return;
+                #my $temp = "NA";
+             }
+             if ($opt->[3] =~ /^a/){
+                $opt->[3] =~ s/^a/i/g;
+                print "toggled off/$ [$idx]:[$opt->[1]]${bla}[$opt->[3]]\n";
+             }elsif ($opt->[3] =~ /^i/){
+                $opt->[3] =~ s/^i/a/g;
+                print "toggled on [$idx]:[$opt->[1]]${bla}[$opt->[3]]\n";
+             }
         }
     }
     save_config();
@@ -340,4 +344,3 @@ sub new_config {
 $mw->show_all();
 reload_config();
 Gtk3->main();
-
