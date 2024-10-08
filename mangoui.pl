@@ -251,14 +251,15 @@ sub toggle_option {
         if ($opt->[0] eq $idx) {
             if ($opt->[3] =~ /^a/){
                $opt->[3] =~ s/^a/i/g;
+               print "toggled [$idx]:[$opt->[1]]${temp}[$opt->[3]]\n";
             }elsif ($opt->[3] =~ /^i/){
                $opt->[3] =~ s/^i/a/g;
             }
             my $temp = "";
             if (defined($opt->[2])){
-                $temp = "[$opt->[2]]";
+               $temp = "[$opt->[2]]";
+               print "toggled [$idx]:[$opt->[1]]${temp}[$opt->[3]]\n";
             }
-            print "toggled [$idx]:[$opt->[1]]${temp}[$opt->[3]]\n";
         }
     }
     save_config();
