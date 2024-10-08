@@ -15,10 +15,10 @@ An example config file is provided.
 #### What it does:
 - it reads the config file line by line and presents each relevant line in the GUI. (see: "Known Line Types" below)
 - lines identified as either option or option=value are presented as lines with checkboxes and also textboxes where apropriate.
-- the checkbox adds/removes a "#" to enable/disable an option
-- the textbox sets an options value
-- comments are shown as text lines between GUI elements
-- empty lines are not shown
+- the checkbox adds/removes "#", from the start of the line, to enable/disable an option.
+- the textbox sets an options value.
+- comments are shown as text lines between GUI elements.
+- empty lines are not shown.
 
 ### Known Line types:
 - emt = empty line
@@ -27,6 +27,6 @@ An example config file is provided.
 - iov = inactive option+value
 - aoo = active option
 - aov = active option+value
-- any line with more than exactly one "#" is considered a comment
+- any line with more than exactly one "#" is considered a comment.
 
 ![image](https://github.com/user-attachments/assets/1abdc47c-d58d-4ec7-99c3-0dc12f37301d)
