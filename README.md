@@ -5,8 +5,10 @@ The GUI simply displays the MangoHUD config for convenient editing through check
 An example config file is provided.
 
 Rules:
-- you may set der default folder for load file, at the top of the script in: `our $default_path = "/home/".getpwuid($>)."/.config/MangoHud/";  # "load" dialog default location`
-- you may set der default file to load on startup, at the top of the script in: `our $file_path = "/home/".getpwuid($>)."/.config/MangoHud/MangoHud.conf"; # default file to load upon startup`
+- you may set the default folder for load file, at the top of the script in:
+- `our $default_path = "/home/".getpwuid($>)."/.config/MangoHud/";  # "load" dialog default location`
+- you may set the default file to load on startup, at the top of the script in:
+- `our $file_path = "/home/".getpwuid($>)."/.config/MangoHud/MangoHud.conf"; # default file to load upon startup`
 - most of what the script does and sees is printed to the terminal. So if problems arise, running from terminal may provide extra info.
 
 - any line with more than exactly one "#" is considered a comment
