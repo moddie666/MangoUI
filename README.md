@@ -23,10 +23,10 @@ An example config file is provided.
 - empty lines are not shown.
 ------------------------------------
 ### Known Line types:
-- emt = empty line
-- com = comment
-- ioo = inactive option
-- iov = inactive option+value
-- aoo = active option
-- aov = active option+value
-- any line with more than exactly one "#" is considered a comment.
+- `emt` = empty line
+- `com` = comment<br>any line with more than exactly one `#` is considered a comment.
+- `ioo` = inactive option
+- `iov` = inactive option+value
+- `aoo` = active option
+- `aov` = active option+value
+- `und` = lines, unmatched by any regex, likely a bug. please report.
