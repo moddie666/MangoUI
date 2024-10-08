@@ -257,9 +257,7 @@ sub toggle_option {
              if (defined($opt->[2])){
                 $bla = "[$opt->[2]]";
              } else {
-                $bla = "NA";
-                return;
-                #my $temp = "NA";
+                $bla = "";
              }
              if ($opt->[3] =~ /^a/){
                 $opt->[3] =~ s/^a/i/g;
