@@ -46,7 +46,9 @@ $vbox->pack_start($scrolled_window, 1, 1, 0);
 # Create a frame inside the scrolled window
 my $scrollable_frame = Gtk3::FlowBox->new;
 $scrolled_window->add($scrollable_frame);
-$scrollable_frame->set_min_children_per_line(3);
+$scrollable_frame->set_min_children_per_line(1);
+$scrollable_frame->set_max_children_per_line(1);
+#$scrollable_frame->set_orientation('vertical'); # NOPE
 
 # Button for loading the configuration
 my $load_button = Gtk3::Button->new("Load Config");
@@ -112,25 +114,25 @@ sub load_config {
             push @options, [$idx, "", "", id_line($line), $line];
         } elsif ($line =~ /^\s*#+\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.\/:;,'"\\\}\{\]\[\s-]+)?\s*$/) {
             my ($key, $value) = ($1, $2);
-            print id_line($line).":$line\n";
+            print "(PARSE)".id_line($line).":$line\n";
             push @options, [$idx, $key, $value, id_line($line), $line];
         } elsif ($line =~ /^\s*#+\s*([0-9a-zA-Z_-]+)\s*$/) {
             my ($key, $value) = ($1, $2);
-            print id_line($line).":$line\n";
+            print "(PARSE)".id_line($line).":$line\n";
             push @options, [$idx, $key, $value, id_line($line), $line];
         } elsif ($line =~ /^\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.\/:;,\s-]+)?\s*$/) {
             my ($key, $value) = ($1, $2);
-            print id_line($line).":$line\n";
+            print "(PARSE)".id_line($line).":$line\n";
             push @options, [$idx, $key, $value, id_line($line), $line];
         } elsif ($line =~ /^\s*([0-9a-zA-Z_-]+)\s*$/) {
             my ($key, $value) = ($1, $2);
-            print id_line($line).":$line\n";
+            print "(PARSE)".id_line($line).":$line\n";
             push @options, [$idx, $key, "", id_line($line), $line];
         } elsif ($line =~ /^\s*#+/) {
-            print id_line($line).":$line\n";
+            print "(PARSE)".id_line($line).":$line\n";
             push @options, [$idx, "#", "", id_line($line), $line];
         } else {
-            print id_line($line).":$line\n";
+            print "(PARSE)".id_line($line).":$line\n";
             push @options, [$idx, "#", "", id_line($line), $line];
         }
         $idx += 1;
@@ -141,13 +143,18 @@ sub load_config {
 # Display options on the GUI
 sub display_options {
     clear_options_frame();  # Clear any existing options
+
+    my $total_options = scalar @options;  #number of rows
+    my $opt_per_col = int($total_options / 3);
+    print "tot:".$total_options." per col:".$opt_per_col;
+
     foreach my $option (@options) {
         my ($idx, $key, $value, $id, $original_line) = @$option;
         #print "$key, $is_on, $value, $original_line";
         if (!defined($original_line)){
           print 'UNDEFINED original_line';
         }
-        print("(".caller().")".id_line($original_line).":[$key][$original_line]\n");
+        print("(DISPLAY)".id_line($original_line).":[$key][$original_line]\n");
         if ($id eq "emt") {
         # empty or space only lines
         } elsif ($id eq "ioo") {
