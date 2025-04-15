@@ -38,6 +38,15 @@ my @options = ();
 my $vbox = Gtk3::Box->new('vertical', 5);
 $mw->add($vbox);
 
+# ---- New Search Bar Start ----
+my $search_entry = Gtk3::Entry->new();
+$search_entry->set_placeholder_text("Search (regex)...");
+# Connect the changed signal so that the display gets updated with every keystroke.
+$search_entry->signal_connect(changed => sub { display_options(); });
+# Pack the search bar at the top of the vbox.
+$vbox->pack_start($search_entry, 0, 0, 0);
+# ---- New Search Bar End ----
+
 # Create a scrolled window
 my $scrolled_window = Gtk3::ScrolledWindow->new();
 $scrolled_window->set_policy('automatic', 'automatic');
@@ -50,18 +59,22 @@ $scrollable_frame->set_min_children_per_line(1);
 $scrollable_frame->set_max_children_per_line(1);
 #$scrollable_frame->set_orientation('vertical'); # NOPE
 
-# Button for loading the configuration
+# Buttons container for load/reload buttons
+my $btn_box = Gtk3::Box->new('horizontal', 5);
+$vbox->pack_start($btn_box, 0, 0, 0);
+
 my $load_button = Gtk3::Button->new("Load Config");
 $load_button->signal_connect(clicked => \&new_config);
-$vbox->pack_start($load_button, 0, 0, 0);
+$load_button->set_halign('start');
+$btn_box->pack_start($load_button, 0, 0, 0);
 
 my $reload_button = Gtk3::Button->new("Reload Config");
 $reload_button->signal_connect(clicked => \&reload_config);
-$vbox->pack_start($reload_button, 0, 0, 0);
+$reload_button->set_halign('start');
+$btn_box->pack_start($reload_button, 0, 0, 0);
 
 # Load config
 sub load_config {
-#    print "fp:[$file_path]\n";
     if (!$file_path || $file_path eq ""){
         print "Path not set, selecting...\n";
         my $dialog = Gtk3::FileChooserDialog->new(
@@ -144,21 +157,35 @@ sub load_config {
 sub display_options {
     clear_options_frame();  # Clear any existing options
 
-    my $total_options = scalar @options;  #number of rows
+    # Retrieve the current search regex string from the search bar.
+    my $regex_text = $search_entry->get_text;
+    my $rx;
+    if ($regex_text ne "") {
+        eval { $rx = qr/$regex_text/ };
+        if ($@) {
+            # If the regex is invalid, set rx to undef (i.e. do not filter)
+            $rx = undef;
+        }
+    }
+    
+    my $total_options = scalar @options;  # number of rows
     my $opt_per_col = int($total_options / 3);
     print "tot:".$total_options." per col:".$opt_per_col;
 
     foreach my $option (@options) {
         my ($idx, $key, $value, $id, $original_line) = @$option;
-        #print "$key, $is_on, $value, $original_line";
+        # If a valid regex was provided, only display options with a match in the original line.
+        if (defined($rx)) {
+            next unless ($original_line =~ $rx);
+        }
         if (!defined($original_line)){
           print 'UNDEFINED original_line';
         }
         print("(DISPLAY)".id_line($original_line).":[$key][$original_line]\n");
         if ($id eq "emt") {
-        # empty or space only lines
+            # empty or space only lines
         } elsif ($id eq "ioo") {
-        # inactive option only line
+            # inactive option only line
             my $hbox = Gtk3::Box->new('horizontal', 5);
             my $cb = Gtk3::CheckButton->new("");
             $cb->set_active("0");
@@ -168,7 +195,7 @@ sub display_options {
             $hbox->pack_start($label, 0, 0, 0);
             $scrollable_frame->add($hbox);
         } elsif ($id eq "iov") {
-        # inactive otion/value line
+            # inactive otion/value line
             my $hbox = Gtk3::Box->new('horizontal', 5);
             my $cb = Gtk3::CheckButton->new("");
             $cb->set_active("0");
@@ -176,17 +203,17 @@ sub display_options {
             $hbox->pack_start($cb, 0, 0, 0);
             my $label = Gtk3::Label->new("$key = ");
             $hbox->pack_start($label, 0, 0, 0);
-            my $entry = Gtk3::Entry->new();# p
+            my $entry = Gtk3::Entry->new();
             if (defined($value)){
                $entry->set_text("$value");
-            }else{
+            } else {
                $entry->set_text("");
             }
             $entry->signal_connect('focus-out-event' => sub { update_value($idx, $entry->get_text); });
             $hbox->pack_start($entry, 1, 1, 0);
             $scrollable_frame->add($hbox);
         } elsif ($id eq "aoo") {
-        # active option line
+            # active option line
             my $hbox = Gtk3::Box->new('horizontal', 5);
             my $cb = Gtk3::CheckButton->new("");
             $cb->set_active("1");
@@ -195,8 +222,8 @@ sub display_options {
             my $label = Gtk3::Label->new("$key");
             $hbox->pack_start($label, 0, 0, 0);
             $scrollable_frame->add($hbox);
-        } elsif ( $id eq "aov") {
-        # active option/value line
+        } elsif ($id eq "aov") {
+            # active option/value line
             my $hbox = Gtk3::Box->new('horizontal', 5);
             my $cb = Gtk3::CheckButton->new("");
             $cb->set_active("1");
@@ -207,14 +234,14 @@ sub display_options {
             my $entry = Gtk3::Entry->new();
             if (defined($value)){
                $entry->set_text("$value");
-            }else{
+            } else {
                $entry->set_text("");
             }
             $entry->signal_connect('focus-out-event' => sub { update_value($idx, $entry->get_text); });
             $hbox->pack_start($entry, 1, 1, 0);
             $scrollable_frame->add($hbox);
         } elsif ($id eq "com") {
-        # Comment-only line
+            # Comment-only line
             my $escapelabel = encode_entities($original_line);
             my $label = Gtk3::Label->new($escapelabel);
             $label->set_markup("<span font='monospace'>$escapelabel</span>");
@@ -223,60 +250,62 @@ sub display_options {
             # Set the label to wrap text
             $label->set_line_wrap(1);
             # Set alignment to left
-            #$label->set_justify('left');          # Set text justification
-            $label->set_halign('start');          # Align label horizontally to start (left)
-            $label->set_valign('start');          # Align label vertically to top (optional)
+            $label->set_halign('start');
+            $label->set_valign('start');
             $scrollable_frame->add($label);
-        } else { # un-matched line
-                 # should not land here catchall
+        } else {
+            # Un-matched line; should not be reached.
         }
     }
     $scrollable_frame->show_all();
 }
-sub id_line { #identify type of line
+
+sub id_line {
     my $input = shift;
     my $output = "und";
-        if (!defined($input)) {
-           $output = "und";
-        } elsif ($input =~ /^\s*$/) { # empty line
-           $output = "emt";
-        } elsif ($input =~ /^\s*#+\s*([0-9a-zA-Z_-]+)\s*$/) { # inactive option only line
-           $output = "ioo";
-        } elsif ($input =~ /^\s*#+\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.,\/:;'"\\\}\{\]\[\s-]+)?\s*$/) { # inactive otion/value line
-            $output = "iov";
-        } elsif ($input =~ /^\s*([0-9a-zA-Z_-]+)\s*$/) { # active option line
-            $output = "aoo";
-        } elsif ($input =~ /^\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.,\/:;'"\\\}\{\]\[\s-]+)?\s*$/) { # active option/value line
-            $output = "aov";
-        } elsif ($input =~ /^\s*#+.*$/) { # Comment-only line
-            $output = "com";
-        } else { # should not land here catchall
-            $output = "und";
-        }
+    if (!defined($input)) {
+       $output = "und";
+    } elsif ($input =~ /^\s*$/) { # empty line
+       $output = "emt";
+    } elsif ($input =~ /^\s*#+\s*([0-9a-zA-Z_-]+)\s*$/) { # inactive option only line
+       $output = "ioo";
+    } elsif ($input =~ /^\s*#+\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.,\/:;'"\\\}\{\]\[\s-]+)?\s*$/) { # inactive otion/value line
+       $output = "iov";
+    } elsif ($input =~ /^\s*([0-9a-zA-Z_-]+)\s*$/) { # active option line
+       $output = "aoo";
+    } elsif ($input =~ /^\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.,\/:;'"\\\}\{\]\[\s-]+)?\s*$/) { # active option/value line
+       $output = "aov";
+    } elsif ($input =~ /^\s*#+.*$/) { # Comment-only line
+       $output = "com";
+    } else {
+       $output = "und";
+    }
     return $output;
 }
+
 # Toggle option active state
 sub toggle_option {
     my ($idx, $is_on_ref) = @_;
     foreach my $opt (@options) {
         if ($opt->[0] eq $idx) {
-             my $bla = "NA";
-             if (defined($opt->[2])){
+            my $bla = "NA";
+            if (defined($opt->[2])){
                 $bla = "[$opt->[2]]";
-             } else {
+            } else {
                 $bla = "";
-             }
-             if ($opt->[3] =~ /^a/){
+            }
+            if ($opt->[3] =~ /^a/){
                 $opt->[3] =~ s/^a/i/g;
                 print "toggled off [$idx]:[$opt->[1]]${bla}[$opt->[3]]\n";
-             }elsif ($opt->[3] =~ /^i/){
+            } elsif ($opt->[3] =~ /^i/){
                 $opt->[3] =~ s/^i/a/g;
                 print "toggled on [$idx]:[$opt->[1]]${bla}[$opt->[3]]\n";
-             }
+            }
         }
     }
     save_config();
 }
+
 # Update value
 sub update_value {
     my ($idx, $new_value) = @_;
@@ -296,10 +325,10 @@ sub update_value {
     }
     save_config();
 }
+
 # Save the configuration back to the file, preserving comments and empty lines
 sub save_config {
     return unless $file_path;
-
     open my $fh, '>', $file_path or die "Could not open file '$file_path': $!";
     foreach my $opt (@options) {
         my ($idx, $key, $value, $id, $original_line) = @$opt;
@@ -309,21 +338,20 @@ sub save_config {
         if (!defined($value)){
            $value = "";
         }
-        #show full saved config interpretation#print(id_line($original_line).":saving:[$original_line]\n");
-        if ($id eq "emt") { # empty or space only lines
+        if ($id eq "emt") {
            print $fh "$original_line\n";
-        } elsif ($id eq "ioo") { # inactive option only line
+        } elsif ($id eq "ioo") {
            print $fh "# $key\n";
-        } elsif ($id eq "iov") { # inactive otion/value line
+        } elsif ($id eq "iov") {
            print $fh "# $key=$value\n";
-        } elsif ($id eq "aoo") { # active option line
+        } elsif ($id eq "aoo") {
            print $fh "$key\n";
-        } elsif ($id eq "aov") { # active option/value line
+        } elsif ($id eq "aov") {
            print $fh "$key=$value\n";
-        } elsif ($id eq "com") { # Comment-only line
+        } elsif ($id eq "com") {
            print $fh "$original_line\n";
-        } else { # should not land here catchall
-            print "# unmatched line: [$original_line]\n";
+        } else {
+            print $fh "# unmatched line: [$original_line]\n";
         }
     }
     close $fh;
