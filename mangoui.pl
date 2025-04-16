@@ -1,12 +1,11 @@
 #!/usr/bin/perl
 #
-# 2024 mod@benjicom
+# 2025 mod@benjicom
 #
 # MangoUI - The basicest MangoHUD config editor
-# v0.2
-# special tahnks to https://github.com/Skarbrand
-# for the 3 column version \o/
+# v0.4
 #
+
 use strict;
 use warnings;
 use Gtk3 '-init';
@@ -53,11 +52,9 @@ $scrolled_window->set_policy('automatic', 'automatic');
 $vbox->pack_start($scrolled_window, 1, 1, 0);
 
 # Create a frame inside the scrolled window
-my $scrollable_frame = Gtk3::FlowBox->new;
+my $scrollable_frame = Gtk3::ListBox->new;
+$scrollable_frame->set_selection_mode('none');
 $scrolled_window->add($scrollable_frame);
-$scrollable_frame->set_min_children_per_line(1);
-$scrollable_frame->set_max_children_per_line(1);
-#$scrollable_frame->set_orientation('vertical'); # NOPE
 
 # Buttons container for load/reload buttons
 my $btn_box = Gtk3::Box->new('horizontal', 5);
@@ -169,8 +166,7 @@ sub display_options {
     }
     
     my $total_options = scalar @options;  # number of rows
-    my $opt_per_col = int($total_options / 3);
-    print "tot:".$total_options." per col:".$opt_per_col;
+    print "total:".$total_options."\n"; 
 
     foreach my $option (@options) {
         my ($idx, $key, $value, $id, $original_line) = @$option;
@@ -193,7 +189,8 @@ sub display_options {
             $hbox->pack_start($cb, 0, 0, 0);
             my $label = Gtk3::Label->new("$key");
             $hbox->pack_start($label, 0, 0, 0);
-            $scrollable_frame->add($hbox);
+#            $scrollable_frame->add($hbox);
+            $scrollable_frame->insert($hbox, -1);
         } elsif ($id eq "iov") {
             # inactive otion/value line
             my $hbox = Gtk3::Box->new('horizontal', 5);
@@ -211,7 +208,8 @@ sub display_options {
             }
             $entry->signal_connect('focus-out-event' => sub { update_value($idx, $entry->get_text); });
             $hbox->pack_start($entry, 1, 1, 0);
-            $scrollable_frame->add($hbox);
+#            $scrollable_frame->add($hbox);
+            $scrollable_frame->insert($hbox, -1);
         } elsif ($id eq "aoo") {
             # active option line
             my $hbox = Gtk3::Box->new('horizontal', 5);
@@ -221,7 +219,8 @@ sub display_options {
             $hbox->pack_start($cb, 0, 0, 0);
             my $label = Gtk3::Label->new("$key");
             $hbox->pack_start($label, 0, 0, 0);
-            $scrollable_frame->add($hbox);
+#            $scrollable_frame->add($hbox);
+            $scrollable_frame->insert($hbox, -1);
         } elsif ($id eq "aov") {
             # active option/value line
             my $hbox = Gtk3::Box->new('horizontal', 5);
@@ -239,7 +238,8 @@ sub display_options {
             }
             $entry->signal_connect('focus-out-event' => sub { update_value($idx, $entry->get_text); });
             $hbox->pack_start($entry, 1, 1, 0);
-            $scrollable_frame->add($hbox);
+#            $scrollable_frame->add($hbox);
+            $scrollable_frame->insert($hbox, -1);
         } elsif ($id eq "com") {
             # Comment-only line
             my $escapelabel = encode_entities($original_line);
@@ -252,7 +252,8 @@ sub display_options {
             # Set alignment to left
             $label->set_halign('start');
             $label->set_valign('start');
-            $scrollable_frame->add($label);
+#            $scrollable_frame->add($label);
+            $scrollable_frame->insert($label, -1);
         } else {
             # Un-matched line; should not be reached.
         }
