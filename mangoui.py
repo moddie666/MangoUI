@@ -16,7 +16,7 @@ import re
 import io
 
 # Global variables (set defaults similar to the Perl script)
-prog_name = "MangoUI"
+prog_name = "(py) MangoUI"
 default_path = os.path.expanduser("~/.config/MangoHud")
 file_path = os.path.join(default_path, "MangoHud.conf")
 icon_path = "/tmp/minimango.png"  # Ensure this file exists for an icon, or update the path as needed.

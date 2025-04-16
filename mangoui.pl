@@ -13,7 +13,7 @@ use File::Slurp;
 use HTML::Entities;
 use MIME::Base64;
 
-our $prog_name = "MangoUI";
+our $prog_name = "(pl) MangoUI";
 # Variables
 our $default_path = "/home/".getpwuid($>)."/.config/MangoHud/";  # "load" dialog default location
 our $file_path = "/home/".getpwuid($>)."/.config/MangoHud/MangoHud.conf"; # default file to load upon startup
