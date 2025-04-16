@@ -1,7 +1,7 @@
 # MangoUI
 The basicest MangoHUD config editor
 ------------------------------------
-![image](https://github.com/user-attachments/assets/0977b249-e6f6-43ff-a1f6-5e4001b524fd)
+![image](https://github.com/user-attachments/assets/f8f9af99-f736-43e7-92c9-f279689ec963)
 ------------------------------------
 ### Overview:
 The GUI simply displays the MangoHUD config for convenient editing through check- and textboxes.<br>
