@@ -206,6 +206,7 @@ sub display_options {
                $entry->set_text("");
             }
             $entry->signal_connect('focus-out-event' => sub { update_value($idx, $entry->get_text); });
+            $entry->signal_connect('activate' => sub { update_value($idx, $entry->get_text); });
             $hbox->pack_start($entry, 1, 1, 0);
             $scrollable_frame->insert($hbox, -1);
         } elsif ($id eq "aoo") {
@@ -234,6 +235,7 @@ sub display_options {
                $entry->set_text("");
             }
             $entry->signal_connect('focus-out-event' => sub { update_value($idx, $entry->get_text); });
+            $entry->signal_connect('activate' => sub { update_value($idx, $entry->get_text); });
             $hbox->pack_start($entry, 1, 1, 0);
             $scrollable_frame->insert($hbox, -1);
         } elsif ($id eq "com") {
