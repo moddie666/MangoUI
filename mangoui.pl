@@ -189,7 +189,6 @@ sub display_options {
             $hbox->pack_start($cb, 0, 0, 0);
             my $label = Gtk3::Label->new("$key");
             $hbox->pack_start($label, 0, 0, 0);
-#            $scrollable_frame->add($hbox);
             $scrollable_frame->insert($hbox, -1);
         } elsif ($id eq "iov") {
             # inactive otion/value line
@@ -208,7 +207,6 @@ sub display_options {
             }
             $entry->signal_connect('focus-out-event' => sub { update_value($idx, $entry->get_text); });
             $hbox->pack_start($entry, 1, 1, 0);
-#            $scrollable_frame->add($hbox);
             $scrollable_frame->insert($hbox, -1);
         } elsif ($id eq "aoo") {
             # active option line
@@ -219,7 +217,6 @@ sub display_options {
             $hbox->pack_start($cb, 0, 0, 0);
             my $label = Gtk3::Label->new("$key");
             $hbox->pack_start($label, 0, 0, 0);
-#            $scrollable_frame->add($hbox);
             $scrollable_frame->insert($hbox, -1);
         } elsif ($id eq "aov") {
             # active option/value line
@@ -238,7 +235,6 @@ sub display_options {
             }
             $entry->signal_connect('focus-out-event' => sub { update_value($idx, $entry->get_text); });
             $hbox->pack_start($entry, 1, 1, 0);
-#            $scrollable_frame->add($hbox);
             $scrollable_frame->insert($hbox, -1);
         } elsif ($id eq "com") {
             # Comment-only line
@@ -252,7 +248,6 @@ sub display_options {
             # Set alignment to left
             $label->set_halign('start');
             $label->set_valign('start');
-#            $scrollable_frame->add($label);
             $scrollable_frame->insert($label, -1);
         } else {
             # Un-matched line; should not be reached.
