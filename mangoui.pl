@@ -179,10 +179,15 @@ sub display_options {
         }
         print("(DISPLAY)".id_line($original_line).":[$key][$original_line]\n");
         if ($id eq "emt") {
-            # empty or space only lines
-        } elsif ($id eq "ioo") {
-            # inactive option only line
+                                 # empty or space only lines
+        } elsif ($id eq "ioo") { # inactive option only line
             my $hbox = Gtk3::Box->new('horizontal', 5);
+            # add line number
+            my $ln = Gtk3::Label->new();
+            my $num = sprintf("%4d", $idx);
+            $ln->set_markup("<span font='monospace' foreground='gray'>$num: </span>");
+            $ln->set_use_markup(1);
+            $hbox->pack_start($ln, 0, 0, 0);
             my $cb = Gtk3::CheckButton->new("");
             $cb->set_active("0");
             $cb->signal_connect(toggled => sub { toggle_option($idx, \$id); });
@@ -190,9 +195,14 @@ sub display_options {
             my $label = Gtk3::Label->new("$key");
             $hbox->pack_start($label, 0, 0, 0);
             $scrollable_frame->insert($hbox, -1);
-        } elsif ($id eq "iov") {
-            # inactive otion/value line
+        } elsif ($id eq "iov") { # inactive otion/value line
             my $hbox = Gtk3::Box->new('horizontal', 5);
+            # add line number
+            my $ln = Gtk3::Label->new();
+            my $num = sprintf("%4d", $idx);
+            $ln->set_markup("<span font='monospace' foreground='gray'>$num: </span>");
+            $ln->set_use_markup(1);
+            $hbox->pack_start($ln, 0, 0, 0);
             my $cb = Gtk3::CheckButton->new("");
             $cb->set_active("0");
             $cb->signal_connect(toggled => sub { toggle_option($idx, \$id); });
@@ -209,9 +219,14 @@ sub display_options {
             $entry->signal_connect('activate' => sub { update_value($idx, $entry->get_text); });
             $hbox->pack_start($entry, 1, 1, 0);
             $scrollable_frame->insert($hbox, -1);
-        } elsif ($id eq "aoo") {
-            # active option line
+        } elsif ($id eq "aoo") { # active option line
             my $hbox = Gtk3::Box->new('horizontal', 5);
+            # add line number
+            my $ln = Gtk3::Label->new();
+            my $num = sprintf("%4d", $idx);
+            $ln->set_markup("<span font='monospace' foreground='gray'>$num: </span>");
+            $ln->set_use_markup(1);
+            $hbox->pack_start($ln, 0, 0, 0);
             my $cb = Gtk3::CheckButton->new("");
             $cb->set_active("1");
             $cb->signal_connect(toggled => sub { toggle_option($idx, \$id); });
@@ -219,30 +234,41 @@ sub display_options {
             my $label = Gtk3::Label->new("$key");
             $hbox->pack_start($label, 0, 0, 0);
             $scrollable_frame->insert($hbox, -1);
-        } elsif ($id eq "aov") {
-            # active option/value line
+        } elsif ($id eq "aov") { # active option/value line
             my $hbox = Gtk3::Box->new('horizontal', 5);
+            # add line number
+            my $ln = Gtk3::Label->new();
+            my $num = sprintf("%4d", $idx);
+            $ln->set_markup("<span font='monospace' foreground='gray'>$num: </span>");
+            $ln->set_use_markup(1);
+            $hbox->pack_start($ln, 0, 0, 0);
+            # add checkbox
             my $cb = Gtk3::CheckButton->new("");
             $cb->set_active("1");
             $cb->signal_connect(toggled => sub { toggle_option($idx, \$id); });
             $hbox->pack_start($cb, 0, 0, 0);
+            # add option name
             my $label = Gtk3::Label->new("$key = ");
             $hbox->pack_start($label, 0, 0, 0);
+            # add textbox
             my $entry = Gtk3::Entry->new();
             if (defined($value)){
                $entry->set_text("$value");
             } else {
                $entry->set_text("");
             }
+            # save on click away
             $entry->signal_connect('focus-out-event' => sub { update_value($idx, $entry->get_text); });
             $entry->signal_connect('activate' => sub { update_value($idx, $entry->get_text); });
+            # pack the stuff into the horizontal box that
             $hbox->pack_start($entry, 1, 1, 0);
+            # add the horizontal box that makes up the line to the main display area
             $scrollable_frame->insert($hbox, -1);
-        } elsif ($id eq "com") {
-            # Comment-only line
+        } elsif ($id eq "com") { # Comment-only line
             my $escapelabel = encode_entities($original_line);
             my $label = Gtk3::Label->new($escapelabel);
-            $label->set_markup("<span font='monospace'>$escapelabel</span>");
+            my $num = sprintf("%4d", $idx);
+            $label->set_markup("<span font='monospace' foreground='gray'>$num: </span><span font='monospace'>$escapelabel</span>");
             # Enable markup
             $label->set_use_markup(1);
             # Set the label to wrap text
