@@ -1,117 +1,125 @@
 #!/usr/bin/env python3
 """
-MangoUI - The basicest MangoHUD config editor (v0.2, Python version)
-Original idea from the Perl script.
+mangoui.py – Python 3 + PyGObject port of mangoui.pl [written by ChatGPT and edited by mod@benjicom]
+Exact replication of parsing, debug output, GUI behavior, and saving.
 
-Requirements:
-  - PyGObject (GTK+3)
-  - Python 3.x
+^ this is what chatgpt thinks XD ^
+ it did an okay job, but it totally chokes on the large base64 blob when trying to generate anything
+ it also missed some points, like skipping empty lines and differently colored linenumbers.
+ but overall pretty impressive [also, I added the by-line]
+
 """
 
 import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Pango, GLib
 import os
 import re
 import io
+import base64
 
-# Global variables (set defaults similar to the Perl script)
-prog_name = "(py) MangoUI"
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, GLib
+
+# Globals
+prog_name   = "MangoUI"
 default_path = os.path.expanduser("~/.config/MangoHud")
-file_path = os.path.join(default_path, "MangoHud.conf")
-icon_path = "/tmp/minimango.png"  # Ensure this file exists for an icon, or update the path as needed.
+file_path   = os.path.join(default_path, "MangoHud.conf")
+icon_path   = "/tmp/minimango.png"
+icon_base64 = 'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA0GVYSWZJSSoACAAAAAoAAAEEAAEAAAAgAAAAAQEEAAEAAAAgAAAAAgEDAAMAAACGAAAAEgEDAAEAAAABAAAAGgEFAAEAAACMAAAAGwEFAAEAAACUAAAAKAEDAAEAAAACAAAAMQECAA0AAACcAAAAMgECABQAAACqAAAAaYcEAAEAAAC+AAAAAAAAAAgACAAIAEgAAAABAAAASAAAAAEAAABHSU1QIDIuMTAuMzgAADIwMjQ6MTA6MDggMTY6MDA6NDEAAQABoAMAAQAAAAEAAAAAAAAAjjR8+wAAAYRpQ0NQSUNDIHByb2ZpbGUAAHicfZE9SMNAHMVfU8VSWgTtIOKQoTrZwQ/EsVahCBVCrdCqg8mlX9CkIUlxcRRcCw5+LFYdXJx1dXAVBMEPEGcHJ0UXKfF/SaFFrAfH/Xh373H3DhAaFaZZPXFA020znUyI2dyq2PeKIAIIYwATMrOMOUlKoev4uoePr3cxntX93J8jrOYtBvhE4jgzTJt4g3hm0zY47xNHWElWic+Jx026IPEj1xWP3zgXXRZ4ZsTMpOeJI8RisYOVDmYlUyOeJo6qmk75QtZjlfMWZ61SY6178heG8vrKMtdpjiCJRSxBgggFNZRRgY0YrTopFtK0n+jiH3b9ErkUcpXByLGAKjTIrh/8D353axWmJr2kUALofXGcj1Ggbxdo1h3n+9hxmieA/xm40tv+agOY/SS93taiR0D/NnBx3daUPeByBxh6MmRTdiU/TaFQAN7P6JtywOAtEFzzemvt4/QByFBXqRvg4BAYK1L2epd3Bzp7+/dMq78fkl1ys0DKXsYAAA14aVRYdFhNTDpjb20uYWRvYmUueG1wAAAAAAA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/Pgo8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJYTVAgQ29yZSA0LjQuMC1FeGl2MiI+CiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiCiAgICB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIKICAgIHhtbG5zOnN0RXZ0PSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VFdmVudCMiCiAgICB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iCiAgICB4bWxuczpHSU1QPSJodHRwOi8vd3d3LmdpbXAub3JnL3htcC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgeG1wTU06RG9jdW1lbnRJRD0iZ2ltcDpkb2NpZDpnaW1wOmQ5MzM5NmI5LWMzYWUtNGYxYi04YTFjLTNkMDU5MzRkMjgzYSIKICAgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo5ODhlNDg5YS0wMWRlLTQzZWEtYTc0NC01OGUyMDE3ZjQ2ZWIiCiAgIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDozMzIzNDFjOC05ZDBlLTQzMzYtYWEyMS0zODdkNDQ3N2RiNzEiCiAgIGRjOkZvcm1hdD0iaW1hZ2UvcG5nIgogICBHSU1QOkFQST0iMi4wIgogICBHSU1QOlBsYXRmb3JtPSJMaW51eCIKICAgR0lNUDpUaW1lU3RhbXA9IjE3MjgzOTYwNDI3MjIyMDYiCiAgIEdJTVA6VmVyc2lvbj0iMi4xMC4zOCIKICAgdGlmZjpPcmllbnRhdGlvbj0iMSIKICAgeG1wOkNyZWF0b3JUb29sPSJHSU1QIDIuMTAiCiAgIHhtcDpNZXRhZGF0YURhdGU9IjIwMjQ6MTA6MDhUMTY6MDA6NDErMDI6MDAiCiAgIHhtcDpNb2RpZnlEYXRlPSIyMDI0OjEwOjA4VDE2OjAwOjQxKzAyOjAwIj4KICAgPHhtcE1NOkhpc3Rvcnk+CiAgICA8cmRmOlNlcT4KICAgICA8cmRmOmxpCiAgICAgIHN0RXZ0OmFjdGlvbj0ic2F2ZWQiCiAgICAgIHN0RXZ0OmNoYW5nZWQ9Ii8iCiAgICAgIHN0RXZ0Omluc3RhbmNlSUQ9InhtcC5paWQ6MjdkZDI1OGEtZDJjMC00MDU2LTlkNzgtZjQ4N2I3MzY3ZTE3IgogICAgICBzdEV2dDpzb2Z0d2FyZUFnZW50PSJHaW1wIDIuMTAgKExpbnV4KSIKICAgICAgc3RFdnQ6d2hlbj0iMjAyNC0xMC0wOFQxNjowMDo0MiswMjowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgCjw/eHBhY2tldCBlbmQ9InciPz5mAzoFAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH6AoIDgAqaOLn3QAABZZJREFUWMO9lltsHdUVhr+198yci89x7GAcU0KUNoGqlDiSE2KjKAUiJKSqfeGhUkVVaJAqtarUNiGOHC5BihTASQBBqsIjVyEBD1SpRAEhXkgUYlooLQohTZVLCVGx8eXYPufM7L14mOMTH9txEqMwTzOavdf/r9u/luUyP61bWJ7fyJbgRvmwepDyzP/2coIv/rW0soS9Jsd1wLKWdVe8Wzow2XDGXFb3v6O/kYA2BTVNdJd1cO3MI5eNQPEeaZOQm1XSbwHI0/OtEbAFXeEtIjVs7/EiXPmtEfAJ4wLKVAQMBuXszHPBxRg7uMWEbaFfW4zoCg3XKrQbQ1Gg6hzDCMfHqnw86Di49lH+D1CMzdHJih/UDIuNYMXh3TjvzLQt8wEf6WNlS8RdOcOPw5A2o3gHWAUn5+5L7T1xlMuOgYmYFyYC+2bPmOsO29nhEhId5qmRPbxxUQQO/V4WLW/WrdmIn4WGCEHlQmHS1JgDEUVLMf8YLvNQT0JePGcGH+fER5tZ1lZgfdayQqEQO+JZKfi0l9XtTbovsiwVQeYCV60BCnhQVbyAMSAioIA15OOE0aG9/PPYfaxvfohH8wFrBQyS3g+g2mD7+HZ+1Jbn6UDIi6BeMQIqgk4/F6ehfmvC8c5ohSMSU40iMvmA6zIBtyhcdbIkv1WV0tK8f7A5x50ovppwwsFHznMMQ7ma4OsEPttOZ3uOF0NDQaYlx2vaKTXHdKzKgS8n6Pvhbk7Ol5E3Npmwa6l/pinDrSLIaJnXTmrh3nU7SzqrDY/2SlNrhr2RpSjSWBlG8CjeKwxX2X983PzqQuAATfko8cqwpJnSQsBPr0hKcythMdBNOcP31OPnMiYgE44PTg2ZrTft8dWLad0N+8r6eUUerCacUkXEELREPPDB5qBh/piDvVLIZdlkBCMyR1coJI7Jr0ps7X7Kly9FjLr6tVRyvApgBZMNuaElm9zcQGBJqBsjwyKZo89U02If87z0/d0cX4giVhP+haamDJhiwB0NBAqWHgSjMlsVFEg88eAkzy1UkkPF+1oFYyCwbBj4g8nUCRjL9ee7LCBlx3ud/ZxYKAEJWCZ1sYTAUsgG/uppRU77+QTZg45WePabDKVMwO3TJrJakChg8bkICJkpZavLjSKqmPGYgRFy7y4U/ONeOrOW7tRizbqiZtoMNk45bbRRblWQcsLnZ8fZvObhSV0I+ECvia4qsDMQ7FT8lbQSR6p8WSfgHZ+oAZ2SOoVywpmhCr/s3M2phXq/JOO35SyrZpZE7CiFyBd1AqPKIXw9QBJ7yv8rcffKXXy2EODDf2qR0/fzu5aIu0UxOmPyJp4DnXu0rifBRCxvl0MdyltaSb1/e1U/RxYC/v4WE139xfADi3L8QiR1Sj1T8w8FnYh5vUEHOh/RUjnmea/ggEBYdnizDS4V/Ng2ulYU/WvNGe40NXdFUGPTtHpFJ2M+HRmzb81aSP6+TZquyepfchlWGkVLFf56tsyOVf3nimXOVW2ryXRk/IaC5efZiFsFJEjni9d64yE1QUtOT3LX9bt4b86N6GgfnR05Xg4sORRNHKWq528lx+HY8R9V4pwSaMQ11vLdrPIDY+mOLM1Gzr/a+bQB9asKf166k/55V7ITfdzWmuPJwJL3oEYBgxFFVUElXYYsiK81jUi6tMzUcF/Tfqf4kSqvnNWwr2tn7C+4E568j3XNGfZlAjrU4+RSF/fabuhBEk+1VOGZMz54Ys2uxJ1H7mc/n9zLlW15tucDfmINgRfESMOMmtOW1zRqNSE7MjrJjuWPcGjeWTHfz3/3sXpxxD15y8bI0jTtlkwjU7eROJKK48PRhOfPjNv96x937oLD6qL6+49S7MhrT2BZE1quFaHDCiGeJIFRVf5bSXh/aIKB1Y9dmnp+DZ8IS9977RoAAAAAAElFTkSuQmCC'
 
-# Global storage for configuration options.
-# Each option is stored as a dict with keys:
-#   idx: line number (1-indexed)
-#   key: parsed key
-#   value: parsed value
-#   id: type identifier ("emt", "ioo", "iov", "aoo", "aov", "com", or "und")
-#   line: the original full line text
+# Storage for parsed lines:
+# each entry is a dict with keys: idx, key, value, id, line
 options = []
+
 
 class MangoUI(Gtk.Window):
     def __init__(self):
         super().__init__(title=f"{prog_name} - MangoHud Config Editor")
         self.set_border_width(10)
         self.set_default_size(1360, 768)
+
+        with open(icon_path, "wb") as f:
+            f.write(base64.b64decode(icon_base64))
+        self.set_icon_from_file(icon_path)
         try:
             self.set_icon_from_file(icon_path)
         except Exception as e:
-            print(f"Warning: Couldn't load icon from {icon_path}: {e}")
+            print(f"Warning: cannot load icon: {e}")
 
-        # Main vertical box layout
+        # Vertical container
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
         self.add(vbox)
 
-        # --- New Search Bar ---
+        # Search entry
         self.search_entry = Gtk.Entry()
         self.search_entry.set_placeholder_text("Search (regex)...")
-        self.search_entry.connect("changed", self.on_search_changed)
+        self.search_entry.connect("changed", lambda e: self.display_options())
         vbox.pack_start(self.search_entry, False, False, 0)
 
-        # --- Scrolled Window and FlowBox ---
-        self.scrolled_window = Gtk.ScrolledWindow()
-        self.scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        vbox.pack_start(self.scrolled_window, True, True, 0)
+        # Scrolled window + ListBox
+        self.scrolled = Gtk.ScrolledWindow()
+        self.scrolled.set_policy(Gtk.PolicyType.AUTOMATIC,
+                                 Gtk.PolicyType.AUTOMATIC)
+        vbox.pack_start(self.scrolled, True, True, 0)
 
-        # Using a FlowBox for one-column layout (similar to GTK3 FlowBox in Perl)
-        self.flowbox = Gtk.FlowBox()
-        self.flowbox.set_max_children_per_line(1)
-        self.flowbox.set_min_children_per_line(1)
-        self.flowbox.set_valign(Gtk.Align.START)
-        self.scrolled_window.add(self.flowbox)
+        self.listbox = Gtk.ListBox()
+        self.listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.scrolled.add(self.listbox)
 
-        # --- Buttons ---
-        button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
-        vbox.pack_start(button_box, False, False, 0)
+        # Button row
+        btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
+        vbox.pack_start(btn_box, False, False, 0)
 
-        load_button = Gtk.Button(label="Load Config")
-        load_button.connect("clicked", self.new_config)
-        button_box.pack_start(load_button, False, False, 0)
+        load_btn = Gtk.Button(label="Load Config")
+        load_btn.connect("clicked", lambda b: self.new_config())
+        btn_box.pack_start(load_btn, False, False, 0)
 
-        reload_button = Gtk.Button(label="Reload Config")
-        reload_button.connect("clicked", self.reload_config)
-        button_box.pack_start(reload_button, False, False, 0)
+        reload_btn = Gtk.Button(label="Reload Config")
+        reload_btn.connect("clicked", lambda b: self.reload_config())
+        btn_box.pack_start(reload_btn, False, False, 0)
 
-        # Show the window and load the config on startup
+        # Show and load
         self.show_all()
         self.load_config()
 
-    def on_search_changed(self, widget):
-        self.display_options()
+    def id_line(self, line: str) -> str:
+        if re.match(r'^\s*$', line):
+            return "emt"
+        if re.match(r'^\s*#+\s*([0-9A-Za-z_-]+)=', line):
+            return "iov"
+        if re.match(r'^\s*#+\s*([0-9A-Za-z_-]+)\s*$', line):
+            return "ioo"
+        if re.match(r'^\s*([0-9A-Za-z_-]+)=', line):
+            return "aov"
+        if re.match(r'^\s*([0-9A-Za-z_-]+)\s*$', line):
+            return "aoo"
+        if re.match(r'^\s*#+', line):
+            return "com"
+        return "und"
 
     def load_config(self):
         global file_path, options
-
-        # If file_path is not set, open a file chooser dialog
-        if not file_path or file_path == "":
-            dialog = Gtk.FileChooserDialog(
-                title="Select a file",
-                parent=self,
-                action=Gtk.FileChooserAction.OPEN)
-            dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                               Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
-            dialog.set_current_folder(default_path)
-
-            response = dialog.run()
-            if response == Gtk.ResponseType.OK:
-                file_path = dialog.get_filename()
-                print("Selected file:", file_path)
-            else:
-                print("File selection canceled.")
-                dialog.destroy()
-                return
-            dialog.destroy()
-
-            if file_path and not file_path.endswith(".conf"):
-                print("Invalid file selected. Please select a .conf file.")
+        # choose file if needed
+        if not file_path or not os.path.isfile(file_path):
+            dlg = Gtk.FileChooserDialog(
+                title="Select a file", parent=self,
+                action=Gtk.FileChooserAction.OPEN,
+                buttons=(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                         Gtk.STOCK_OPEN,   Gtk.ResponseType.OK)
+            )
+            dlg.set_current_folder(default_path)
+            resp = dlg.run()
+            if resp == Gtk.ResponseType.OK:
+                file_path = dlg.get_filename()
+            dlg.destroy()
+            if not file_path.endswith(".conf"):
+                print("Invalid file; must end with .conf")
                 file_path = ""
                 return
 
-        options = []
-        self.clear_flowbox()
+        options.clear()
+        self.listbox.foreach(lambda w: self.listbox.remove(w))
 
+        # read & parse
         try:
             with io.open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
@@ -121,132 +129,128 @@ class MangoUI(Gtk.Window):
 
         self.set_title(f"{prog_name} - MangoHud Config Editor [{file_path}]")
         idx = 1
-        for line in lines:
-            line = line.rstrip('\n')
-            if re.match(r'^\s*$', line):
-                options.append({'idx': idx, 'key': "", 'value': "", 'id': self.id_line(line), 'line': line})
-            elif re.match(r'^\s*#+\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\./:;,\s\'"\\\}\{\]\[-]+)?\s*$', line):
-                m = re.match(r'^\s*#+\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\./:;,\s\'"\\\}\{\]\[-]+)?\s*$', line)
-                key, value = m.group(1), m.group(2)
-                options.append({'idx': idx, 'key': key, 'value': value, 'id': self.id_line(line), 'line': line})
-            elif re.match(r'^\s*#+\s*([0-9a-zA-Z_-]+)\s*$', line):
-                m = re.match(r'^\s*#+\s*([0-9a-zA-Z_-]+)\s*$', line)
+        for raw in lines:
+            line = raw.rstrip("\n")
+            lnid = self.id_line(line)
+            key = ""
+            value = ""
+            # extract key/value for options
+            m = re.match(r'^\s*#+\s*([0-9A-Za-z_-]+)=?(.*)?', line)
+            if not m:
+                m = re.match(r'^\s*([0-9A-Za-z_-]+)=?(.*)?', line)
+            if m:
                 key = m.group(1)
-                options.append({'idx': idx, 'key': key, 'value': "", 'id': self.id_line(line), 'line': line})
-            elif re.match(r'^\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\./:;,\s-]+)?\s*$', line):
-                m = re.match(r'^\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\./:;,\s-]+)?\s*$', line)
-                key, value = m.group(1), m.group(2)
-                options.append({'idx': idx, 'key': key, 'value': value, 'id': self.id_line(line), 'line': line})
-            elif re.match(r'^\s*([0-9a-zA-Z_-]+)\s*$', line):
-                m = re.match(r'^\s*([0-9a-zA-Z_-]+)\s*$', line)
-                key = m.group(1)
-                options.append({'idx': idx, 'key': key, 'value': "", 'id': self.id_line(line), 'line': line})
-            elif re.match(r'^\s*#+', line):
-                options.append({'idx': idx, 'key': "#", 'value': "", 'id': self.id_line(line), 'line': line})
-            else:
-                options.append({'idx': idx, 'key': "#", 'value': "", 'id': self.id_line(line), 'line': line})
+                value = m.group(2) or ""
+            options.append({
+                "idx": idx,
+                "key": key,
+                "value": value,
+                "id": lnid,
+                "line": line
+            })
+            print(f"(PARSE){lnid}:{line}")
             idx += 1
 
         self.display_options()
 
-    def id_line(self, input_line):
-        """Determine the type of a line."""
-        if input_line is None:
-            return "und"
-        elif re.match(r'^\s*$', input_line):
-            return "emt"
-        elif re.match(r'^\s*#+\s*([0-9a-zA-Z_-]+)\s*$', input_line):
-            return "ioo"
-        elif re.match(r'^\s*#+\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.,\/:;\'"\\\}\{\]\[-]+)?\s*$', input_line):
-            return "iov"
-        elif re.match(r'^\s*([0-9a-zA-Z_-]+)\s*$', input_line):
-            return "aoo"
-        elif re.match(r'^\s*([0-9a-zA-Z_-]+)=([0-9a-zA-Z%_+\.,\/:;\'"\\\}\{\]\[-]+)?\s*$', input_line):
-            return "aov"
-        elif re.match(r'^\s*#+.*$', input_line):
-            return "com"
-        else:
-            return "und"
-
     def display_options(self):
-        """Refresh the display of config options with optional regex filtering."""
-        self.clear_flowbox()
-        
+        # clear
+        self.listbox.foreach(lambda w: self.listbox.remove(w))
+
+        # compile regex
+        pattern = self.search_entry.get_text()
         rx = None
-        regex_text = self.search_entry.get_text()
-        if regex_text != "":
+        if pattern:
             try:
-                rx = re.compile(regex_text)
+                rx = re.compile(pattern)
             except re.error:
                 rx = None
-        
+
         for opt in options:
-            # If a valid regex filter was given, skip lines that don't match.
-            if rx and not rx.search(opt['line']):
+            if rx and not rx.search(opt["line"]):
                 continue
 
+            lnid = opt["id"]
+            line = opt["line"]
+            key   = opt["key"]
+            value = opt["value"]
+            idx   = opt["idx"]
+
+            print(f"(DISPLAY){lnid}:[{key}][{line}]")
+            if lnid == "emt":
+                continue
+            # row container
             hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
 
-            # For options that represent editable configuration lines.
-            if opt['id'] in ["ioo", "iov", "aoo", "aov"]:
-                check_active = True if opt['id'] in ["aoo", "aov"] else False
+            # line number label
+            ln_lbl = Gtk.Label()
+            text = GLib.markup_escape_text(f"{idx}:")
+            ln_lbl.set_markup(f"<span font='monospace' foreground='gray'>{text}</span>")
+            ln_lbl.set_xalign(0)
+            hbox.pack_start(ln_lbl, False, False, 0)
+
+            if lnid in ("ioo", "aoo"):
                 cb = Gtk.CheckButton()
-                cb.set_active(check_active)
-                cb.connect("toggled", self.on_toggle_option, opt['idx'])
+                cb.set_active(lnid == "aoo")
+                cb.connect("toggled", self.on_toggle, idx)
                 hbox.pack_start(cb, False, False, 0)
 
-                label_text = f"{opt['key']}" if opt['id'] in ["ioo", "aoo"] else f"{opt['key']} = "
-                label = Gtk.Label(label=label_text)
-                label.set_xalign(0)
-                hbox.pack_start(label, False, False, 0)
+                lbl = Gtk.Label(label=key)
+                lbl.set_xalign(0)
+                lbl.set_hexpand(True)
+                hbox.pack_start(lbl, True, True, 0)
 
-                if opt['id'] in ["iov", "aov"]:
-                    entry = Gtk.Entry()
-                    entry.set_text(opt['value'] if opt['value'] is not None else "")
-                    entry.connect("focus-out-event", self.on_value_update, opt['idx'])
-                    hbox.pack_start(entry, True, True, 0)
-            elif opt['id'] == "com":
-                # For comment lines, display the text using monospace.
-                # Escape the text for proper markup rendering.
-                safe_text = GLib.markup_escape_text(opt['line'])
-                label = Gtk.Label()
-                label.set_markup(f"<span font='monospace'>{safe_text}</span>")
-                label.set_xalign(0)
-                label.set_line_wrap(True)
-                hbox.pack_start(label, True, True, 0)
-            else:
-                # For empty or unmatched lines, skip creating a widget.
-                continue
+            elif lnid in ("iov", "aov"):
+                cb = Gtk.CheckButton()
+                cb.set_active(lnid == "aov")
+                cb.connect("toggled", self.on_toggle, idx)
+                hbox.pack_start(cb, False, False, 0)
 
-            self.flowbox.add(hbox)
-        self.flowbox.show_all()
+                lbl = Gtk.Label(label=f"{key} = ")
+                lbl.set_xalign(0)
+                hbox.pack_start(lbl, False, False, 0)
 
-    def clear_flowbox(self):
-        for child in self.flowbox.get_children():
-            self.flowbox.remove(child)
+                entry = Gtk.Entry()
+                entry.set_text(value)
+                entry.set_alignment(0)
+                entry.set_hexpand(True)
+                entry.connect("focus-out-event",
+                              lambda e, i=idx, w=entry: self.on_value(i, w.get_text()))
+                entry.connect("activate",
+                              lambda e, i=idx, w=entry: self.on_value(i, w.get_text()))
+                hbox.pack_start(entry, True, True, 0)
 
-    def on_toggle_option(self, widget, idx):
-        """Toggle the active state of an option. (Switch 'aoo' and 'ioo', 'aov' and 'iov'.)"""
+            elif lnid == "com":
+                esc = GLib.markup_escape_text(line)
+                lbl = Gtk.Label()
+                lbl.set_markup(f"<span font='monospace'>{esc}</span>")
+                lbl.set_xalign(0)
+                lbl.set_line_wrap(True)
+                hbox.pack_start(lbl, True, True, 0)
+
+            # add to listbox
+            self.listbox.insert(hbox, -1)
+
+        self.listbox.show_all()
+
+    def on_toggle(self, widget, idx):
         for opt in options:
-            if opt['idx'] == idx:
-                if opt['id'].startswith("a"):
-                    opt['id'] = "i" + opt['id'][1:]
-                    print(f"toggled off [{idx}]: [{opt['key']}] [{opt.get('value','')}]")
-                elif opt['id'].startswith("i"):
-                    opt['id'] = "a" + opt['id'][1:]
-                    print(f"toggled on [{idx}]: [{opt['key']}] [{opt.get('value','')}]")
+            if opt["idx"] == idx:
+                if opt["id"].startswith("a"):
+                    opt["id"] = "i" + opt["id"][1:]
+                    print(f"toggled off [{idx}]:[{opt['key']}]")
+                else:
+                    opt["id"] = "a" + opt["id"][1:]
+                    print(f"toggled on  [{idx}]:[{opt['key']}]")
+                break
         self.save_config()
 
-    def on_value_update(self, widget, event, idx):
-        new_value = widget.get_text()
+    def on_value(self, idx, newval):
         for opt in options:
-            if opt['idx'] == idx:
-                if opt['value'] == new_value:
-                    print(f"unchanged [{idx}]: [{opt['key']}] is [{opt['value']}]")
-                    return
-                else:
-                    opt['value'] = new_value
-                    print(f"changed [{idx}]: [{opt['key']}] to [{opt['value']}]")
+            if opt["idx"] == idx and opt["value"] != newval:
+                opt["value"] = newval
+                print(f"changed [{idx}]:[{opt['key']}] to [{newval}]")
+                break
         self.save_config()
 
     def save_config(self):
@@ -256,29 +260,33 @@ class MangoUI(Gtk.Window):
         try:
             with io.open(file_path, "w", encoding="utf-8") as f:
                 for opt in options:
-                    if opt['id'] == "emt":
-                        f.write(opt['line'] + "\n")
-                    elif opt['id'] == "ioo":
-                        f.write(f"# {opt['key']}\n")
-                    elif opt['id'] == "iov":
-                        f.write(f"# {opt['key']}={opt['value']}\n")
-                    elif opt['id'] == "aoo":
-                        f.write(f"{opt['key']}\n")
-                    elif opt['id'] == "aov":
-                        f.write(f"{opt['key']}={opt['value']}\n")
-                    elif opt['id'] == "com":
-                        f.write(opt['line'] + "\n")
+                    lnid = opt["id"]
+                    line = opt["line"]
+                    k    = opt["key"]
+                    v    = opt["value"] or ""
+                    if lnid == "emt":
+                        f.write(line + "\n")
+                    elif lnid == "ioo":
+                        f.write(f"# {k}\n")
+                    elif lnid == "iov":
+                        f.write(f"# {k}={v}\n")
+                    elif lnid == "aoo":
+                        f.write(f"{k}\n")
+                    elif lnid == "aov":
+                        f.write(f"{k}={v}\n")
+                    elif lnid == "com":
+                        f.write(line + "\n")
                     else:
-                        f.write(f"# unmatched line: [{opt['line']}]\n")
+                        f.write(line + "\n")
             print(f"saved {file_path}")
         except Exception as e:
             print(f"Error saving file: {e}")
 
-    def reload_config(self, widget):
+    def reload_config(self):
         if file_path:
             self.load_config()
 
-    def new_config(self, widget):
+    def new_config(self):
         global file_path
         file_path = ""
         self.load_config()
