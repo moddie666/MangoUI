@@ -9,8 +9,8 @@ An example config file is provided.
 
 ------------------------------------
 ### How to use:
-- you may set the default folder for load file, at the top of the script in:<br>`our $default_path = "/home/".getpwuid($>)."/.config/MangoHud/";  # "load" dialog default location`
-- you may set the default file to load on startup, at the top of the script in:<br>`our $file_path = "/home/".getpwuid($>)."/.config/MangoHud/MangoHud.conf"; # default file to load upon startup`
+- you may set the default folder for load file, at the top of the script in:<br>`our $default_path = $userhome."/.config/MangoHud/";           # "load" dialog default location`
+- you may set the default file to load on startup, at the top of the script in:<br>`our $file_path = $userhome."/.config/MangoHud/MangoHud.conf"; # default file to load upon startup`
 - change stuff and see the results immediately in mangohud! ;)
 - most of what the script does and sees is printed to the terminal. So if problems arise, running from terminal may provide extra info.
 ------------------------------------
