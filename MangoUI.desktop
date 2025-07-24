@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=MangoUI
+GenericName=MangoHUD Config Editor
+Comment=Minimal GUI editor for MangoHud.conf
+Exec=/usr/bin/mangoui.pl
+Icon=/home/$USER/local/share/icons/minimango.png
+Terminal=false
+Type=Application
+Categories=Utility;Settings;Graphics;
+StartupNotify=true
+StartupWMClass=mangoui.pl

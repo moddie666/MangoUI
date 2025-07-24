@@ -20,7 +20,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GLib
 
 # Globals
-prog_name   = "MangoUI"
+prog_name   = "MangoUI.py"
 default_path = os.path.expanduser("~/.config/MangoHud")
 file_path   = os.path.join(default_path, "MangoHud.conf")
 icon_path   = "/tmp/minimango.png"
