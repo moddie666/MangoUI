@@ -112,6 +112,8 @@ sub load_config {
         } else {
             print "File selection canceled.\n";
             $dialog->destroy();
+            $file_path = $userhome."/.config/MangoHud/MangoHud.conf";  # Reset invalid file path
+            print "Selection cancelled, using default file: $file_path\n";
             return;  # Exit if no file is selected
         }
         $dialog->destroy();
@@ -119,11 +121,10 @@ sub load_config {
         # Ensure the selected file has a .conf extension
         if ($file_path && $file_path !~ /\.conf$/) {
             print "Invalid file selected. Please select a .conf file.\n";
-            $file_path = "";  # Clear invalid file path
+            $file_path = $userhome."/.config/MangoHud/MangoHud.conf";  # Reset invalid file path
             return;
         }
     }
-
     return unless $file_path;
 
     @options = ();
